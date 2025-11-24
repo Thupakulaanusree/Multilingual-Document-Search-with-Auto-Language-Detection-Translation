@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Super Mini Search Engine</title>
+
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 1000px; margin: auto; }
+    input[type=file] { display:block; margin-bottom: 10px; }
+    .result-box { background: #fafafa; border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+    .meta { color: #555; font-size: 0.9em; margin-bottom: 8px; }
+    .pdf-name { font-size: 18px; font-weight: bold; color: #0077cc; }
+    .snippet { background: #fff; padding: 10px; border-radius: 6px; border: 1px solid #ccc; margin-top: 10px; }
+    mark { background: yellow; font-weight: bold; }
+    details summary { cursor: pointer; color: #444; margin-top: 10px; font-size: 0.95em; }
+    pre { white-space: pre-wrap; background: #fff; padding: 10px; border: 1px solid #ccc; border-radius: 5px; margin-top: 8px; max-height: 250px; overflow-y: auto; }
+  </style>
+</head>
+<body>
+
+  <h1>Super Mini Search Engine</h1>
+
+  <!-- Upload + Query UI -->
+  <form method="post" enctype="multipart/form-data">
+    <label><strong>Upload PDFs (multiple allowed):</strong></label>
+    <input type="file" name="pdfs" accept=".pdf" multiple>
+
+    <label><strong>Query:</strong></label>
+    <input type="text" name="query" style="width:60%" placeholder="Type search query..." />
+
+    <label><strong>Ranking Method:</strong></label>
+    <select name="mode">
+      <option value="tfidf" {{ 'selected' if mode=='tfidf' else '' }}>TF-IDF</option>
+      <option value="bm25" {{ 'selected' if mode=='bm25' else '' }}>BM25</option>
+      <option value="faiss" {{ 'selected' if mode=='faiss' else '' }}>FAISS</option>
+    </select>
+
+    <label style="margin-left: 10px;">
+      <input type="checkbox" name="combine" value="1" {% if combine %}checked{% endif %}> Combine BM25 + TF-IDF
+    </label>
+
+    <br><br>
+
+    <!-- NEW: LANGUAGE SELECTOR -->
+    <label><strong>Translate snippet to:</strong></label>
+    <select name="translate_to">
+      {% for code, name in languages.items() %}
+        <option value="{{ code }}">{{ name }}</option>
+      {% endfor %}
+    </select>
+
+    <br><br>
+    <button type="submit">Upload &/or Search</button>
+  </form>
+
+  <hr/>
+
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for cat, msg in messages %}
+        <div style="padding:8px; border:1px solid #ccc; margin:6px 0;">{{ msg }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <h3>Indexed Documents ({{ indexed|length }}):</h3>
+  <ul>
+    {% for d in indexed %}
+      <li>{{ d.title }} — ID: {{ d.id }}</li>
+    {% endfor %}
+  </ul>
+
+  <hr/>
+  <h2>Results</h2>
+
+  {% if results %}
+    <p>Found {{ results|length }} result(s).</p>
+
+    {% for r in results %}
+      <div class="result-box">
+
+        <div class="pdf-name">{{ r.title }}</div>
+
+        <div class="meta">
+          🌐 Language: <b>{{ r.language|upper }}</b>
+          &nbsp; | &nbsp; Score: <b>{{ "%.4f"|format(r.score) }}</b>
+        </div>
+
+        <p><b>Translated snippet ({{ r.target_lang }}):</b></p>
+        <div class="snippet">{{ r.translated_snippet }}</div>
+
+        <details>
+          <summary>Show English snippet</summary>
+          <pre>{{ r.snippet }}</pre>
+        </details>
+
+        {% if r.original_text %}
+        <details>
+          <summary>Show original text ({{ r.language }})</summary>
+          <pre>{{ r.original_text[:2000] }}</pre>
+        </details>
+        {% endif %}
+
+        <!-- ✅ NEW: FULL TRANSLATED PDF TEXT -->
+        {% if r.full_translated_text %}
+        <details>
+          <summary>Show FULL translated text ({{ r.target_lang }})</summary>
+          <pre>{{ r.full_translated_text }}</pre>
+        </details>
+        {% endif %}
+
+      </div>
+    {% endfor %}
+  {% else %}
+    <p>No results yet. Upload PDFs or enter a query and search.</p>
+  {% endif %}
+
+</body>
+</html>

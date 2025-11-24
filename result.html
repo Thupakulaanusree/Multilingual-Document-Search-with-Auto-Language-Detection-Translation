@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Search Results</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f6f6f6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+        }
+
+        .result-box {
+            background: white;
+            padding: 18px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+
+        .score {
+            font-size: 14px;
+            color: #555;
+        }
+
+        .pdf-name {
+            font-size: 18px;
+            color: #0077cc;
+            font-weight: bold;
+        }
+
+        .meta {
+            font-size: 13px;
+            color: #444;
+            margin: 5px 0;
+        }
+
+        a {
+            text-decoration: none;
+            color: white;
+        }
+
+        .back-btn {
+            padding: 10px 20px;
+            background: #0077cc;
+            color: white;
+            border-radius: 6px;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        .snippet {
+            background: #f1f1f1;
+            padding: 12px;
+            border-radius: 8px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <a href="/" class="back-btn">⬅ Back to Search</a>
+
+    <h2>Search Results for: <i>{{ query }}</i></h2>
+    <hr><br>
+
+    {% if results|length == 0 %}
+        <p>No results found.</p>
+    {% endif %}
+
+    {% for r in results %}
+    <div class="result-box">
+
+        <!-- Document title -->
+        <div class="pdf-name">{{ r.title }}</div>
+
+        <!-- Score -->
+        <div class="score">
+            🔍 Similarity Score: <b>{{ "%.4f"|format(r.score) }}</b>
+        </div>
+
+        <!-- NEW Multilingual Info -->
+        <div class="meta">
+            Language: {{ r.language|upper }} |
+            <small>File: {{ r.title }}</small>
+        </div>
+
+        <p><b>Snippet (translated to English for search):</b></p>
+        <div class="snippet">{{ r.snippet|safe }}</div>
+
+        {% if r.original_text %}
+            <details>
+                <summary>Show original text ({{ r.language }})</summary>
+                <pre style="white-space: pre-wrap;">{{ r.original_text[:2000] }}</pre>
+            </details>
+        {% endif %}
+
+    </div>
+    {% endfor %}
+</div>
+
+</body>
+</html>
